@@ -1,0 +1,51 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {cluster_master_node_host_name}
+  namespace: {cluster_namespace}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: {cluster_master_node_host_name}
+  template:
+    metadata:
+      labels:
+        component: {cluster_master_node_host_name}
+    spec:
+      imagePullSecrets:
+        - name: docker-registry-key
+      hostname: {cluster_master_node_host_name}
+      containers:
+        - name: {cluster_master_node_host_name}
+          image: {docker_img_srv_url}/{docker_img_name}
+          imagePullPolicy: Always
+          command: ["/bin/bash", "-c"]
+          args: ["/tmp/init-cluster-config.sh cluster-id slave-count cluster-prefix cluster-port-offset && /tmp/start-master-hadoop.sh slave-count cluster-prefix cluster-port-offset"]
+          ports:
+            - containerPort: {master_namenode_msgr_port}
+            - containerPort: {master_resource_msgr_port}
+            - containerPort: 22
+          resources:
+            requests:
+              cpu: 2
+              memory: 4096Mi
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {master_node_nodeport_svc}
+  namespace: {cluster_namespace}
+spec:
+  type: NodePort
+  ports:
+    - name: masternodeadmin
+      port: {master_namenode_msgr_port}
+      nodePort: {master_namenode_msgr_nodeport}
+      protocol: TCP
+    - name: masternoderesourcemanager
+      port: {master_resource_msgr_port}
+      nodePort: {master_resource_msgr_nodeport}
+      protocol: TCP
+  selector:
+     component: {cluster_master_node_host_name}

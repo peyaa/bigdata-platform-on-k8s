@@ -1,0 +1,51 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {cluster_master_node_host_name}-standby
+  namespace: {cluster_namespace}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: {cluster_master_node_host_name}-standby
+  template:
+    metadata:
+      labels:
+        component: {cluster_master_node_host_name}-standby
+    spec:
+      imagePullSecrets:
+        - name: docker-registry-key
+      hostname: {cluster_master_node_host_name}-standby
+      containers:
+        - name: {cluster_master_node_host_name}-standby
+          image: {docker_img_srv_url}/{docker_img_name}
+          imagePullPolicy: Always
+          command: ["/bin/bash", "-c"]
+          args: ["/tmp/init-cluster-config.sh cluster-id slave-count cluster-prefix cluster-port-offset && /tmp/start-master-standby-hadoop.sh cluster-port-offset"]
+          ports:
+            - containerPort: {standby_namenode_msgr_port}
+            - containerPort: {standby_resource_msgr_port}
+            - containerPort: 22
+          resources:
+            requests:
+              cpu: 2
+              memory: 4096Mi
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {master_node_nodeport_svc}-standby
+  namespace: {cluster_namespace}
+spec:
+  type: NodePort
+  ports:
+    - name: standbynodeadmin
+      port: {standby_namenode_msgr_port}
+      nodePort: {standby_namenode_msgr_nodeport}
+      protocol: TCP
+    - name: standbynoderesourcemanager
+      port: {standby_resource_msgr_port}
+      nodePort: {standby_resource_msgr_nodeport}
+      protocol: TCP
+  selector:
+     component: {cluster_master_node_host_name}-standby

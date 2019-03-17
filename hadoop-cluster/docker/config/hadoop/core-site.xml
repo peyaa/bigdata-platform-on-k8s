@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<configuration>
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://{hadoop_ha_cluster_name}</value>
+    </property>
+    <property>
+        <name>dfs.journalnode.edits.dir</name>
+        <value>/opt/hdfs/journalnode/{node_dir}/</value>
+    </property>
+    <property>
+        <name>hadoop.tmp.dir</name>
+        <value>/opt/hdfs/tmp/{node_dir}/</value>
+    </property> 
+    <property>
+        <name>ha.zookeeper.quorum</name>
+        <value>{zookeeper_cluster_url}</value>
+    </property>
+    <property>
+      <name>ipc.client.connect.max.retries</name>
+      <value>100</value>
+    </property>
+    <property>
+      <name>ipc.client.connect.retry.interval</name>
+      <value>10000</value>
+    </property>
+</configuration>
